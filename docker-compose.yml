@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+
+  anpr-api:
+    build:
+      context: .
+      dockerfile: docker/anpr.Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+      - ./dataset:/app/dataset
+      - ./logs:/app/logs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  easyocr-train:
+    build:
+      context: .
+      dockerfile: docker/train.Dockerfile
+    volumes:
+      - ./dataset/plates:/train/dataset
+      - ./saved_models:/train/saved_models
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    # Не запускается автоматически — только когда нужно обучать
+    profiles: ["train"]
